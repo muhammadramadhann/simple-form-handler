@@ -1,4 +1,5 @@
 import React from 'react';
+import autoBind from 'auto-bind';
 import { createRoot } from 'react-dom/client';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.min.js';
@@ -7,45 +8,36 @@ import './styles/style.css';
 class FormHandler extends React.Component {
     constructor(props) {
         super(props);
+        autoBind(this);
 
         // state initialization
         this.state = {
-            name: '',
-            email: '',
-            gender: 'Man'
+            formValues: [{
+                name: '',
+                email: '',
+                status: 'Siswa'
+            }]
         };
-
-        this.handleNameChange = this.handleNameChange.bind(this);
-        this.handleEmailChange = this.handleEmailChange.bind(this);
-        this.handleGenderChange = this.handleGenderChange.bind(this);
-        this.handleSubmitForm = this.handleSubmitForm.bind(this);
     }
 
-    handleNameChange(event) {
-        this.setState((prevState) => {
-            return {
-                ...prevState,
-                name: event.target.value
-            };
-        });
+    handleChange(index, e) {
+        let formValues = this.state.formValues;
+        formValues[index][e.target.name] = e.target.value;
+        this.setState({ formValues });
     }
 
-    handleEmailChange(event) {
-        this.setState((prevState) => {
-            return {
-                ...prevState,
-                email: event.target.value
-            };
-        });
+    addFormFields() {
+        this.setState(({
+            formValues: [...this.state.formValues, {
+                name: '', email: '', status: 'siswa'
+            }]
+        }))
     }
 
-    handleGenderChange(event) {
-        this.setState((prevState) => {
-            return {
-                ...prevState,
-                gender: event.target.value
-            };
-        });
+    removeFormFields(i) {
+        let formValues = this.state.formValues;
+        formValues.splice(i, 1);
+        this.setState({ formValues });
     }
 
     handleSubmitForm(event) {
@@ -53,50 +45,62 @@ class FormHandler extends React.Component {
         event.preventDefault();
 
         // custom alert based on bootstrap
+        let values = this.state.formValues;
         const alertPlaceHolder = document.getElementById('result');
-        const alert = (name, email, gender) => {
-            alertPlaceHolder.innerHTML = [
-                `<div class="alert alert-success alert-dismissible pb-0" role="alert">
-                    <p class="pb-0">Name : ${name}</p>
-                    <p class="pb-0">Email : ${email}</p>
-                    <p class="pb-0">Gender : ${gender}</p>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>`
-            ];
-        };
 
-        alert(this.state.name, this.state.email, this.state.gender);
+        values.forEach(value => {
+            alertPlaceHolder.innerHTML +=
+                `<div class="alert alert-success alert-dismissible pb-0" role="alert">
+                    <p class="pb-0">Name : ${value.name}</p>
+                    <p class="pb-0">Email : ${value.email}</p>
+                    <p class="pb-0">Status : ${value.status}</p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+        });
     }
 
     render() {
         return (
-            <div className='container my-5'>
-                <div className='row justify-content-center'>
-                    <div id='result' className="col-lg-6 px-0"></div>
+            <div className="container my-5">
+                <div className="row justify-content-center">
+                    <div id="result" className="col-lg-6 px-0"></div>
                 </div>
-                <div className='row justify-content-center'>
-                    <div className="col-lg-6 border rounded p-4">
-                        <h2 className='fw-bold mb-3'>Register Form</h2>
-                        <form onSubmit={this.handleSubmitForm}>
-                            <div className='mb-3'>
-                                <label htmlFor='name' className='form-label'>Name</label>
-                                <input type='text' className='form-control' name='name' id='name' value={this.state.name} onChange={this.handleNameChange} />
+                <h2 className="fw-bold mb-4 text-center">Register Form</h2>
+                <form onSubmit={this.handleSubmitForm}>
+                    {this.state.formValues.map((element, index) => (
+                        <div className="row justify-content-center mb-3" key={index}>
+                            <div className="col-lg-6 border rounded p-4">
+                                <div className="mb-3">
+                                    <label htmlFor="name" className="form-label">Name</label>
+                                    <input type="text" className="form-control" name="name" id="name" value={element.name} onChange={e => this.handleChange(index, e)} required />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="email" className="form-label">Email</label>
+                                    <input type="email" className="form-control" name="email" id="email" value={element.email} onChange={e => this.handleChange(index, e)} required />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="status" className="form-label" id="status">Status</label>
+                                    <select className="form-select" name="status" id="status" value={element.status} onChange={e => this.handleChange(index, e)} required>
+                                        <option value="Siswa">Siswa</option>
+                                        <option value="Mahasiswa">Mahasiswa</option>
+                                        <option value="Pekerja">Pekerja</option>
+                                    </select>
+                                </div>
+                                {
+                                    index ?
+                                        <button type="button" className="btn btn-danger float-end" onClick={() => this.removeFormFields(index)}>Hapus</button>
+                                        : null
+                                }
                             </div>
-                            <div className='mb-3'>
-                                <label htmlFor='email' className='form-label'>Email</label>
-                                <input type='email' className='form-control' name='email' id='email' value={this.state.email} onChange={this.handleEmailChange} />
-                            </div>
-                            <div className="mb-3">
-                                <label htmlFor='gender' className='form-label' id='gender'>Gender</label>
-                                <select className='form-select' name='gender' id='gender' value={this.state.gender} onChange={this.handleGenderChange}>
-                                    <option value='Man'>Man</option>
-                                    <option value='Woman'>Woman</option>
-                                </select>
-                            </div>
-                            <button type='submit' className='btn btn-primary'>Submit</button>
-                        </form>
+                        </div>
+                    ))}
+                    <div className="row justify-content-center">
+                        <div className="col-lg-6 px-0">
+                            <button type="submit" className="btn btn-primary w-100 mb-2">Submit</button>
+                            <button type="button" className="btn btn-secondary w-100" onClick={() => this.addFormFields()}>+ Tambah Data</button>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         );
     }
